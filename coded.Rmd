@@ -1,0 +1,289 @@
+---
+title: "Assignment X"
+author: "Your Name"
+date: "`r format(Sys.Date(), '%B %e, %Y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(gganimate)
+library(metR)
+```
+
+```{r}
+obj_func <- function(x, y){
+  # Modifying for a different global minimum
+  -20 * exp(-0.2 * sqrt(0.5 *((x-1)^2 + (y-1)^2))) - exp(0.5*(cos(2*pi*x) + cos(2*pi*y))) + exp(1) + 20
+}
+obj_func <- function(x, y) {
+  20 + x^2 + y^2 - 10 * cos(2 * pi * x) - 10 * cos(2 * pi * y)
+}
+
+# obj_func <- function(x, y) {
+#   a <- 0.5
+#   b <- 7
+#   sum_term <- sum(0.5^((b) * (2 * pi * (a * x + y) + 1)) * cos(2 * pi * (a * x + y)))
+#   result <- sum_term - length(x)
+#   return(result)
+# }
+
+# Set of x and y values (search domain)
+x <- seq(-10, 10, length.out = 100)
+y <- seq(-10, 10, length.out = 100)
+
+# Create a data frame that stores every permutation of 
+# x and y coordinates
+grid <- expand.grid(x, y, stringsAsFactors = F)
+
+head(grid)
+##         Var1 Var2
+## 1 -10.000000  -10
+## 2  -9.797980  -10
+## 3  -9.595960  -10
+## 4  -9.393939  -10
+## 5  -9.191919  -10
+## 6  -8.989899  -10
+
+# Evaluate the objective function at each x, y value
+grid$z <- obj_func(grid[,1], grid[,2])
+
+# create a contour plot
+contour_plot <- ggplot(grid, aes(x = Var1, y = Var2)) +
+  geom_contour_filled(aes(z = z), color = "black", alpha = 0.5) +
+  scale_fill_brewer(palette = "Spectral") + 
+  theme_minimal() + 
+  labs(x = "x", y = "y", title = "Ackley's Function", subtitle = "Contour plot")
+
+contour_plot
+
+# Say we start with 20 particles
+n_particles <- 20
+
+# Set some initial values for constants
+w <- 0.5
+c1 <- 0.05
+c2 <- 0.1
+
+# Search domain in x and y coordinates 
+x <- seq(-10, 10, length.out = 20)
+y <- seq(-10, 10, length.out = 20)
+
+# Combine into a matrix
+X <- data.frame(x = sample(x, n_particles, replace = F), 
+                y = sample(y, n_particles, replace = F))
+
+# Chart starting locations
+contour_plot + 
+  geom_point(data = X, aes(x, y), color = "red", size = 2.5) + 
+  labs(title = "PSO", subtitle = "Iter 0")
+
+# Uniformly distributed (positive) perturbations
+dX <- matrix(runif(n_particles * 2), ncol = 2)
+
+# Scale down the perturbations by a factor (w in the equation above)
+dX <- dX * w
+
+# Set the location of the local best (optimal value) to starting positions 
+pbest <- X
+
+# Evaluate the function at each point and store 
+pbest_obj <- obj_func(X[,1], X[,2])
+
+# Find a global best and its position
+gbest <- pbest[which.min(pbest_obj),]
+gbest_obj <- min(pbest_obj)
+
+X_dir <- X %>% 
+  mutate(g_x = gbest[1,1], 
+         g_y = gbest[1,2], 
+         angle = atan((g_y - y)/(g_x - x))*180/pi, 
+         angle = ifelse(g_x < x, 180 + angle, angle))
+
+contour_plot + 
+  geom_point(data = X, aes(x, y), color = "red", size = 2.5) + 
+  geom_arrow(data = X_dir, aes(x, y, mag = 1, angle = angle), direction = "ccw", pivot = 0, show.legend = F) + 
+  labs(title = "PSO", subtitle = "Iter 0")
+
+# Update dx based on the equation shown previously
+dX <- w * dX + c1*runif(1)*(pbest - X) + c2*runif(1)*(as.matrix(gbest) - X)
+
+# Add dx to current locations
+X <- X + dX
+
+# Evaluate objective function at new positions
+# Note that X[,1] is the first column i.e. x coordinates
+obj <- obj_func(X[,1], X[,2])
+
+# Find those points where the objective function is lower 
+# than previous iteration 
+idx <- which(obj >= pbest_obj)
+
+# Update locations of local best and store local best values
+pbest[idx,] <- X[idx,]
+pbest_obj[idx] <- obj[idx]
+
+# Identify the minimum value of the of the objective function 
+# amongst all points 
+idx <- which.min(pbest_obj)
+
+# Store as global best 
+gbest <- pbest[idx,]
+gbest_obj <- min(pbest_obj)
+
+X_dir <- X %>% 
+  mutate(g_x = gbest[1,1], 
+         g_y = gbest[1,2], 
+         angle = atan((g_y - y)/(g_x - x))*180/pi, # Need angles to show direction
+         angle = ifelse(g_x < x, 180 + angle, angle))
+
+contour_plot + 
+  geom_point(data = X, aes(x, y), color = "red", size = 2.5) + 
+  geom_arrow(data = X_dir, aes(x, y, mag = 1, angle = angle), direction = "ccw", pivot = 0, show.legend = F) + 
+  labs(title = "PSO", subtitle = "Iter 1")
+```
+
+```{r}
+ggplot(out$X) +
+  geom_contour(data = grid, aes(x = Var1, y = Var2, z = z), color = "black") +
+  geom_point(aes(X1, X2)) +
+  labs(x = "X", y = "Y") +
+  transition_time(iter) +
+  ease_aes("linear")
+```
+
+```{r}
+# Final function
+pso_optim <- function(obj_func,  #Accept a function directly 
+                      c1 = 0.05,
+                      c2 = 0.05,
+                      w = 0.8,
+                      n_particles = 20,
+                      init_fact = 0.1,
+                      n_iter = 50, 
+                      ...   # This ensures we can pass any additional 
+                            # parameters to the objective function
+){
+  
+  x <- seq(min(x), max(x), length.out = 100)
+  y <- seq(min(y), max(y), length.out = 100)
+  
+  X <- cbind(sample(x, n_particles, replace = F),
+             sample(y, n_particles, replace = F))
+  
+  dX <- matrix(runif(n_particles * 2) * init_fact, ncol = 2)
+  
+  pbest <- X
+  pbest_obj <- obj_func(x = X[,1], y = X[,2])
+  
+  gbest <- pbest[which.min(pbest_obj),]
+  gbest_obj <- min(pbest_obj)
+  
+  loc_df <- data.frame(X, iter = 0)
+  iter <- 1
+  
+  while(iter < n_iter){
+    
+    dX <- w * dX + c1*runif(1)*(pbest - X) + c2*runif(1)*(gbest - X)
+    X <- X + dX
+    
+    obj <- obj_func(x = X[,1], y = X[,2])
+    
+    idx <- which(obj <= pbest_obj)
+    pbest[idx,] <- X[idx,]
+    pbest_obj[idx] <- obj[idx]
+    
+    idx <- which.min(pbest_obj)
+    gbest <- pbest[idx,]
+    
+    # Update iteration
+    iter <- iter + 1
+    loc_df <- rbind(loc_df, data.frame(X, iter = iter))
+  }
+  
+  lst <- list(X = loc_df, obj = gbest_obj, obj_loc = paste0(gbest, collapse = ","))
+  return(lst)
+}
+
+# Test optimiser
+out <- pso_optim(obj_func,
+                 x = x,
+                 y = y,
+                 c1 = 0.01,
+                 c2 = 0.05,
+                 w = 0.5, 
+                 n_particles = 50,
+                 init_fact = 0.1,
+                 n_iter = 200)
+
+# Global minimum is at (1,1)
+out$obj_loc
+## [1] "0.999987552893311,0.999977303579515"
+```
+
+```{r}
+# Function to optimize
+weierstrass_with_abs_diff <- function(xy) {
+  x <- xy[1]
+  y <- xy[2]
+  a <- 0.5
+  b <- 3
+  n_terms <- 100
+  weierstrass_sum_x <- sum(sapply(0:n_terms, function(n) a^n * cos(b^n * pi * x)))
+  abs_diff_term_x <- abs(x - 1)
+  weierstrass_sum_y <- sum(sapply(0:n_terms, function(n) a^n * cos(b^n * pi * y)))
+  abs_diff_term_y <- abs(y - 1)
+  return(weierstrass_sum_x + abs_diff_term_x + weierstrass_sum_y + abs_diff_term_y)
+}
+
+# PSO optimization function
+pso_optim <- function(obj_func, c1 = 0.05, c2 = 0.05, w = 0.8, n_particles = 20, init_fact = 0.1, n_iter = 50, ...) {
+  x <- seq(-10, 10, length.out = 100)
+  y <- seq(-10, 10, length.out = 100)
+
+  X <- cbind(sample(x, n_particles, replace = FALSE),
+             sample(y, n_particles, replace = FALSE))
+
+  dX <- matrix(runif(n_particles * 2) * init_fact, ncol = 2)
+
+  pbest <- X
+  pbest_obj <- obj_func(X)  # Corrected argument here
+
+  gbest <- pbest[which.min(pbest_obj), ]
+  gbest_obj <- min(pbest_obj)
+
+  loc_df <- data.frame(X, iter = 0)
+  iter <- 1
+
+  while (iter < n_iter) {
+    dX <- w * dX + c1 * runif(1) * (pbest - X) + c2 * runif(1) * (gbest - X)
+    X <- X + dX
+
+    obj <- obj_func(X)  # Corrected argument here
+
+    idx <- which(obj <= pbest_obj)
+    pbest[idx, ] <- X[idx, ]
+    pbest_obj[idx] <- obj[idx]
+
+    idx <- which.min(pbest_obj)
+    gbest <- pbest[idx, ]
+
+    # Update iteration
+    iter <- iter + 1
+    loc_df <- rbind(loc_df, data.frame(X, iter = iter))
+  }
+
+  lst <- list(X = loc_df, obj = gbest_obj, obj_loc = paste0(gbest, collapse = ","))
+  return(lst)
+}
+
+# Test optimiser with weierstrass_with_abs_diff function
+out_weierstrass <- pso_optim(weierstrass_with_abs_diff, c1 = 0.01, c2 = 0.05, w = 0.5, n_particles = 50, init_fact = 0.1, n_iter = 200)
+
+# Global minimum is expected around (1, 1)
+out_weierstrass$obj_loc
+
+```
+
