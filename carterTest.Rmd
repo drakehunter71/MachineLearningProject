@@ -9,9 +9,35 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
+We want to use PSO for functional optimization. We will use very basic benchmarking for our working algorithm.
 
 ## Testing 
 
+Here we make a function for calculating the infinity norm.
+
 ```{r}
+infnorm <- function(f,g,N,a,b){
+  diff <- rep(NA,N)
+  s <- seq(a,b,(b-a)/N)
+  for(i in 1:N){
+    diff[i] <- abs(f(s[i]) - g(s[i]))
+  }
+  return (max(diff))
+}
+
 ```
+
+Now we make a sampled approximate wiener process function.
+
+```{r}
+
+wiener_process_approx_1d <- function(y0,a,b,c,d,N,delta){
+  approx_wiener_sample_x <- seq(a,b,(b-a)/N)
+  approx_wiener_sample_y <- rep(NA,N)
+  for(i in 1:N){
+    
+  }
+}
+
+```
+
