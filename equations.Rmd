@@ -1,0 +1,59 @@
+---
+title: "Equations for presentation"
+author: "Carter Tams"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: pdf_latex()
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+$$
+\Huge\mathcal{C}[a,b]
+$$
+$$
+
+\Huge{\mathbf{\epsilon}:\mathcal{C}[a,b] \xrightarrow{} \mathbb{R}} \\
+\Huge{\min_{f \in \mathcal{C}[a,b]} \mathbf{\epsilon}(f)}}
+
+$$
+
+
+$$
+
+\Huge{\mathbf{\epsilon}:\mathbb{V} \xrightarrow{} \mathbb{R}}
+\Huge{\min_{f \in \mathbb{V}} \mathbf{\epsilon}(f)}}
+
+
+$$
+
+J = number of particles(functions)
+n_iter = number of steps
+
+
+$$
+\Huge(f_{ij},\mathcal{W}_{ij}(t),f_{i_{best}j},f_{i_{best}j_{best}}) \\
+\Huge{i_{best} = \underset{ k \in \{1,2,...,i\} }{\operatorname{argmin}} \epsilon(f_{kj})} \\
+\Huge{j_{best} = \underset{ k \in \{1,2,...,J\} }{\operatorname{argmin}} \epsilon(f_{i_{best}k})}\\
+\Huge{\mathcal{W}_{(i+1)j} = c_{1}\mathcal{W}_{ij} + c_{2}(f_{i_{best}j}-f_{ij}) + c_{3}(f_{best}-f_{ij})} \\
+\Huge{f_{(i+1)j} = f_{ij} + \mathcal{W}_{ij}} \\
+
+$$
+
+
+$$
+
+\Huge{\mathbf{\epsilon}:\mathbb{V} \xrightarrow{} \mathbb{R}}\\
+\Huge{\min_{f \in \mathbb{V}} \mathbf{\epsilon}(f)}
+$$
+
+
+$$
+\Huge{\mathbf{\epsilon}:\mathcal{C}[a,b] \xrightarrow{} \mathbb{R}}\\
+\Huge{\min_{f \in \mathcal{C}[a,b]} \mathbf{\epsilon}(f)}
+
+$$
