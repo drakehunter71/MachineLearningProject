@@ -24,7 +24,7 @@ infnorm <- function(f,g,N,a,b){
   }
   return (max(diff))
 }
-
+### might need different norms
 ```
 
 Now we make a sampled approximate wiener process function.
@@ -34,10 +34,18 @@ Now we make a sampled approximate wiener process function.
 wiener_process_approx_1d <- function(y0,a,b,c,d,N,delta){
   approx_wiener_sample_x <- seq(a,b,(b-a)/N)
   approx_wiener_sample_y <- rep(NA,N)
-  for(i in 1:N){
-    
+  approx_wiener_sample_y[1] <- y0
+  
+  for(i in 2:(N+1)){
+    approx_wiener_sample_y[i] <- d
+    while((approx_wiener_sample_y[i]<=c) || (approx_wiener_sample_y[i]>=d)){
+      approx_wiener_sample_y[i] <- rnorm(1,approx_wiener_sample_y[i-1],delta)
+    }
   }
+  return (list(x=approx_wiener_sample_x,y=approx_wiener_sample_y))
 }
 
 ```
 
+points <- wiener_process_approx_1d(0,0,1,-1,1,1000,1/10)
+plot(points$x,points$y)
