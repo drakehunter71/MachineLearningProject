@@ -47,3 +47,5 @@ wiener_process_approx_1d <- function(y0,a,b,c,d,N,delta){
 
 ```
 
+points <- wiener_process_approx_1d(0,0,1,-1,1,1000,1/10)
+plot(points$x,points$y)
