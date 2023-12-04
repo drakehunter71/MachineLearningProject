@@ -14,13 +14,23 @@ library(metR)
 ```
 
 ```{r}
-obj_func <- function(x, y){
-  # Modifying for a different global minimum
-  -20 * exp(-0.2 * sqrt(0.5 *((x-1)^2 + (y-1)^2))) - exp(0.5*(cos(2*pi*x) + cos(2*pi*y))) + exp(1) + 20
-}
-obj_func <- function(x, y) {
-  20 + x^2 + y^2 - 10 * cos(2 * pi * x) - 10 * cos(2 * pi * y)
-}
+obj_func = function(x,y) {
+
+  a <- 0.5
+  b <- 3
+  n_terms <- 100
+  weierstrass_sum_x <- sum(sapply(0:n_terms, function(n) a^n * cos(b^n * pi * x)))
+  abs_diff_term_x <- abs(x - 1)
+  weierstrass_sum_y <- sum(sapply(0:n_terms, function(n) a^n * cos(b^n * pi * y)))
+  abs_diff_term_y <- abs(y - 1)
+  return(weierstrass_sum_x + abs_diff_term_x + weierstrass_sum_y + abs_diff_term_y)}
+# obj_func <- function(x, y){
+#   # Modifying for a different global minimum
+#   -20 * exp(-0.2 * sqrt(0.5 *((x-1)^2 + (y-1)^2))) - exp(0.5*(cos(2*pi*x) + cos(2*pi*y))) + exp(1) + 20
+# }
+# obj_func <- function(x, y) {
+#   20 + x^2 + y^2 - 10 * cos(2 * pi * x) - 10 * cos(2 * pi * y)
+# }
 
 # obj_func <- function(x, y) {
 #   a <- 0.5
@@ -146,12 +156,14 @@ contour_plot +
 ```
 
 ```{r}
-ggplot(out$X) +
+p <- ggplot(out$X) +
   geom_contour(data = grid, aes(x = Var1, y = Var2, z = z), color = "black") +
   geom_point(aes(X1, X2)) +
   labs(x = "X", y = "Y") +
   transition_time(iter) +
   ease_aes("linear")
+
+anim_save("Weierstrass.gif", p)
 ```
 
 ```{r}
@@ -214,7 +226,7 @@ out <- pso_optim(obj_func,
                  c1 = 0.01,
                  c2 = 0.05,
                  w = 0.5, 
-                 n_particles = 50,
+                 n_particles = 100,
                  init_fact = 0.1,
                  n_iter = 200)
 

@@ -56,7 +56,7 @@ lower_bound_weierstrass <- rep(-1000, 2)  # Lower bounds for each dimension
 upper_bound_weierstrass <- rep(1000, 2)   # Upper bounds for each dimension
 num_dimensions_weierstrass <- length(lower_bound_weierstrass)  # Number of dimensions
 num_particles_weierstrass <- 50  # Number of particles in the swarm
-num_iterations_weierstrass <- 100  # Number of iterations
+num_iterations_weierstrass <- 500  # Number of iterations
 
 # Run PSO optimization for Weierstrass function
 result_weierstrass <- psoptim(rep(NA, num_dimensions_weierstrass),
