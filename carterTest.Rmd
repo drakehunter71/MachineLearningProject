@@ -38,14 +38,124 @@ wiener_process_approx_1d <- function(y0,a,b,c,d,N,delta){
   
   for(i in 2:(N+1)){
     approx_wiener_sample_y[i] <- d
-    while((approx_wiener_sample_y[i]<=c) || (approx_wiener_sample_y[i]>=d)){
+    while( (approx_wiener_sample_y[i]<=c) || (approx_wiener_sample_y[i]>=d) ){
       approx_wiener_sample_y[i] <- rnorm(1,approx_wiener_sample_y[i-1],delta)
     }
   }
   return (list(x=approx_wiener_sample_x,y=approx_wiener_sample_y))
 }
 
-```
 
 points <- wiener_process_approx_1d(0,0,1,-1,1,1000,1/10)
 plot(points$x,points$y)
+```
+
+
+
+```{r}
+
+PSOfunctional <- function(obj_function,
+                          n_particles=20,
+                          n_iter=200,
+                          c1 = 2,
+                          c2 = 2,
+                          w =0.8,
+                          c.init = 0.1,
+                          a,b,c,d,N,
+                          ...
+){
+  X <- matrix(NA,nrow = n_iter*n_particles,ncol=N+1)
+  Y <- matrix(NA,nrow = n_iter*n_particles,ncol=N+1)
+  dY <- matrix(NA,nrow=n_particles,ncol=N+1)
+  
+  
+  ## initialize positions and velocities
+  for(i in 1:n_particles){
+    points <- wiener_process_approx_1d(runif(1,c,d),a,b,c,d,N,1/100)
+    X[i,] <- points$x
+    Y[i,] <- points$y
+    dY[i,] <- wiener_process_approx_1d(0,a,b,c,d,N,c.init*(1/N))$y
+  }
+  
+  pbest <- Y[1:n_particles,]
+  pbest_obj <- obj_function(x=X[1:n_particles,],y = Y[1:n_particles,])
+  
+  gbest <- pbest[which.min(pbest_obj),]
+  gbest_obj <- min(pbest_obj)
+  
+  iter <- 1
+  while(iter < n_iter){
+    print(iter)
+    ## might have to change runif to wiener function
+    
+    
+    print(dim(pbest))
+    print(dim(Y[(n_particles*(iter-1)+1):(n_particles*iter),]))
+    
+    
+    w1 <- wiener_process_approx_1d(0,a,b,-1,1,N,(d-c)/N)$y
+    w2 <- wiener_process_approx_1d(0,a,b,-1,1,N,(d-c)/N)$y
+    
+    ## update velocities
+    dY <- 
+      w*dY + 
+      c1*matrix(w1,nrow = n_particles,ncol = N+1,byrow = TRUE)*
+      (pbest - Y[(n_particles*(iter-1)+1):(n_particles*iter),]) + 
+      c2*matrix(w1,nrow = n_particles,ncol = N+1,byrow = TRUE)*
+      (matrix(gbest,nrow=n_particles,ncol=N+1,byrow = TRUE) 
+                   - Y[(n_particles*(iter-1)+1):(n_particles*iter),])
+    
+    
+    ## update location
+    
+    
+    
+    
+    Y[((n_particles*iter)+1):(n_particles*(iter+1)),] <-
+      Y[((n_particles*(iter-1))+1):(n_particles*iter),] + dY[(1:n_particles),]
+    
+    
+    X[((n_particles*iter)+1):(n_particles*(iter+1)),] <-
+      X[((n_particles*(iter-1))+1):(n_particles*iter),]
+    
+    ##update objective metrics
+    obj <- obj_function(x = X[((n_particles*iter)+1):(n_particles*(iter+1)),],
+                        y = Y[((n_particles*iter)+1):(n_particles*(iter+1)),])
+    
+    
+    idx <- which(obj <= pbest_obj)
+    pbest[idx,] <- Y[idx,]
+    
+    pbest_obj[idx] <- obj[idx]
+    
+    idx <- which.min(pbest_obj)
+    gbest <- pbest[idx,]
+    
+    iter <- iter+1
+  }
+  
+  
+  return(list("X"=X,"Y"=Y,"gbest"=gbest,"gbest_obj"=gbest_obj))
+}
+
+
+```
+
+
+
+```{r}
+obj_diff <- function(obj,x,y){
+  return(apply(abs(obj(x)-y),1,median))
+}
+
+sin_diff <- function(x,y) {obj_diff(sin,x,y)}
+
+```
+
+
+```{r}
+
+v <- PSOfunctional(sin_diff,a=0,b=6,c=-1.5,d=1.5,N=100,n_particles = 100, n_iter = 1000)
+plot(v$X[1,],v$gbest)
+print(v$gbest_obj)
+```
