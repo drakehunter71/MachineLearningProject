@@ -262,10 +262,10 @@ v <- PSOfunctionalv2(sin_diff,a=0,b=pi/2,c=-1.5,d=1.5,N=100,w=1,c1=2,c2=2,
 plot(v$X[1,],v$gbest)
 print(v$gbest_obj)
 
-df<-("sin.x" = seq(0,pi/2,10000),
-     "sin.y" = sin(seq(0,pi/2,10000)),
-     "x" = v$X[1,],
+df1<-data.frame("sin.x" = seq(0,pi/2,length.out=1000),
+     "sin.y" = sin(seq(0,pi/2,length.out=1000)))
+df2<-data.frame("x" = v$X[1,],
      "y" = v$gbest)
 
-p <- ggplot(df) + geom_point(aes(x=x,y=y)) + geom_line(aes(x=sin.x,y=sin.y))
+p <- ggplot() + geom_point(aes(x=df$x,y=df2$y)) + geom_smooth(aes(x=df1$sin.x,y=df1$sin.y))
 ```
