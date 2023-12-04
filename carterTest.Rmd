@@ -57,13 +57,16 @@ plot(points$x,points$y)
 PSOfunctional <- function(obj_function,
                           n_particles=20,
                           n_iter=200,
-                          c1 = 2,
-                          c2 = 2,
+                          c1 = 0.5,
+                          c2 = 0.5,
                           w =0.8,
-                          c.init = 0.1,
                           a,b,c,d,N,
+                          delta.init,delta.v.init,delta1.r,delta2.r,
                           ...
 ){
+  
+  
+  
   X <- matrix(NA,nrow = n_iter*n_particles,ncol=N+1)
   Y <- matrix(NA,nrow = n_iter*n_particles,ncol=N+1)
   dY <- matrix(NA,nrow=n_particles,ncol=N+1)
@@ -71,10 +74,10 @@ PSOfunctional <- function(obj_function,
   
   ## initialize positions and velocities
   for(i in 1:n_particles){
-    points <- wiener_process_approx_1d(runif(1,c,d),a,b,c,d,N,1/100)
+    points <- wiener_process_approx_1d(runif(1,c,d),a,b,c,d,N,delta.init)
     X[i,] <- points$x
     Y[i,] <- points$y
-    dY[i,] <- wiener_process_approx_1d(0,a,b,c,d,N,c.init*(1/N))$y
+    dY[i,] <- wiener_process_approx_1d(0,a,b,-1,1,N,delta.v.init)$y
   }
   
   pbest <- Y[1:n_particles,]
@@ -89,19 +92,15 @@ PSOfunctional <- function(obj_function,
     ## might have to change runif to wiener function
     
     
-    print(dim(pbest))
-    print(dim(Y[(n_particles*(iter-1)+1):(n_particles*iter),]))
-    
-    
-    w1 <- wiener_process_approx_1d(0,a,b,-1,1,N,(d-c)/N)$y
-    w2 <- wiener_process_approx_1d(0,a,b,-1,1,N,(d-c)/N)$y
+    w1 <- wiener_process_approx_1d(runif(1),a,b,0,1,N,delta1.r)$y
+    w2 <- wiener_process_approx_1d(runif(1),a,b,0,1,N,delta2.r)$y
     
     ## update velocities
     dY <- 
-      w*dY + 
-      c1*matrix(w1,nrow = n_particles,ncol = N+1,byrow = TRUE)*
+      w*runif(1)*dY + 
+      c1*runif(1)*matrix(w1,nrow = n_particles,ncol = N+1,byrow = TRUE)*
       (pbest - Y[(n_particles*(iter-1)+1):(n_particles*iter),]) + 
-      c2*matrix(w1,nrow = n_particles,ncol = N+1,byrow = TRUE)*
+      c2*runif(1)*matrix(w1,nrow = n_particles,ncol = N+1,byrow = TRUE)*
       (matrix(gbest,nrow=n_particles,ncol=N+1,byrow = TRUE) 
                    - Y[(n_particles*(iter-1)+1):(n_particles*iter),])
     
@@ -122,14 +121,17 @@ PSOfunctional <- function(obj_function,
     obj <- obj_function(x = X[((n_particles*iter)+1):(n_particles*(iter+1)),],
                         y = Y[((n_particles*iter)+1):(n_particles*(iter+1)),])
     
-    
+    print(head(obj))
     idx <- which(obj <= pbest_obj)
+    print(idx)
     pbest[idx,] <- Y[idx,]
     
     pbest_obj[idx] <- obj[idx]
     
     idx <- which.min(pbest_obj)
     gbest <- pbest[idx,]
+    
+    print(gbest_obj)
     
     iter <- iter+1
   }
@@ -145,7 +147,7 @@ PSOfunctional <- function(obj_function,
 
 ```{r}
 obj_diff <- function(obj,x,y){
-  return(apply(abs(obj(x)-y),1,median))
+  return(apply(abs(obj(x)-y),1,sum))
 }
 
 sin_diff <- function(x,y) {obj_diff(sin,x,y)}
@@ -155,7 +157,9 @@ sin_diff <- function(x,y) {obj_diff(sin,x,y)}
 
 ```{r}
 
-v <- PSOfunctional(sin_diff,a=0,b=6,c=-1.5,d=1.5,N=100,n_particles = 100, n_iter = 1000)
+v <- PSOfunctional(sin_diff,a=0,b=6,c=-1.5,d=1.5,N=100,w=0.1,c1=0.9,c2=1,
+                   n_particles = 200, n_iter = 2000,
+                   delta.init=1/10,delta.v.init=1,delta1.r=1,delta2.r=1)
 plot(v$X[1,],v$gbest)
 print(v$gbest_obj)
 ```
