@@ -1,0 +1,15 @@
+---
+title: "Matthew Paragraphs"
+author: "Matthew Lee"
+date: "2023-12-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In order to apply particle swarm optimization in a new and intriguing way, we selected an algorithm that is otherwise difficult to minimize. The weierstrass function is non differentiable at any point and continuous everywhere. It can be defined as $W(x, a, b) = \sum_{n=0}^{\infty} a^n \cos(b^n \pi x)$. After graphing this function one will observe the lack of a global minimum, in order to solve this problem one can translate the funciton using an absolute value term, $W(x, a, b) = \sum_{n=0}^{\infty} a^n \cos(b^n \pi x) + |x-1|$. Now after graphing this function there will exist a global minimum. However 
+
+  
+
